@@ -15,7 +15,7 @@ const NoContentType = () => {
     <Main>
       <HeaderLayout
         title={formatMessage({
-          id: getTranslation('header.name'),
+          id: getTranslation('content-manager.header.name'),
           defaultMessage: 'Content',
         })}
       />
