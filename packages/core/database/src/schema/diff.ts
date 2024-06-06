@@ -346,7 +346,15 @@ export default (db: Database) => {
     };
   };
 
-  const diffSchemas = async (srcSchema: Schema, destSchema: Schema): Promise<SchemaDiff> => {
+  const diffSchemas = async ({
+    previousSchema,
+    databaseSchema,
+    currentSchema,
+  }: {
+    previousSchema: Schema;
+    databaseSchema: Schema;
+    currentSchema: Schema;
+  }): Promise<SchemaDiff> => {
     const addedTables: Table[] = [];
     const updatedTables: TableDiff['diff'][] = [];
     const unchangedTables: Table[] = [];
