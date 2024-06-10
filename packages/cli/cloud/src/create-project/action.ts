@@ -1,8 +1,9 @@
-import inquirer from 'inquirer';
+import inquirer, { DistinctQuestion } from 'inquirer';
 import { AxiosError } from 'axios';
 import { defaults } from 'lodash/fp';
 import type { CLIContext, ProjectAnswers, ProjectInput } from '../types';
 import { tokenServiceFactory, cloudApiFactory, local } from '../services';
+import { PackageJson, loadPkg } from '../utils/pkg';
 
 async function handleError(ctx: CLIContext, error: Error) {
   const tokenService = await tokenServiceFactory(ctx);
@@ -43,6 +44,31 @@ async function handleError(ctx: CLIContext, error: Error) {
   );
 }
 
+async function getProjectNameFromPackageJson(ctx: CLIContext): Promise<string | null> {
+  try {
+    const packageJson = (await loadPkg(ctx)) as PackageJson;
+    return packageJson.name;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function setDefaultName(
+  ctx: CLIContext,
+  questions: ReadonlyArray<DistinctQuestion<ProjectAnswers>>,
+  defaultValues: Partial<ProjectAnswers>
+) {
+  const defaultProjectName = await getProjectNameFromPackageJson(ctx);
+  if (!defaultProjectName) {
+    return;
+  }
+  defaultValues.name = defaultProjectName;
+  const nameQuestion = questions.find((q) => q.name === 'name');
+  if (nameQuestion) {
+    nameQuestion.default = defaultProjectName;
+  }
+}
+
 export default async (ctx: CLIContext) => {
   const { logger } = ctx;
   const { getValidToken } = await tokenServiceFactory(ctx);
@@ -54,6 +80,8 @@ export default async (ctx: CLIContext) => {
   const cloudApi = await cloudApiFactory(token);
   const { data: config } = await cloudApi.config();
   const { questions, defaults: defaultValues } = config.projectCreation;
+
+  await setDefaultName(ctx, questions, defaultValues);
 
   const projectAnswersDefaulted = defaults(defaultValues);
   const projectAnswers = await inquirer.prompt<ProjectAnswers>(questions);
