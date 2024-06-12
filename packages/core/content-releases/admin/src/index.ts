@@ -1,11 +1,14 @@
 import { PaperPlane } from '@strapi/icons';
 
-import { CMReleasesContainer } from './components/CMReleasesContainer';
+import { ReleaseActionModalForm } from './components/ReleaseActionModal';
+import { Panel as ReleasesPanel } from './components/ReleasesPanel';
+// import { addColumnToTableHook } from './components/ReleaseListCell';
 import { PERMISSIONS } from './constants';
 import { pluginId } from './pluginId';
 import { prefixPluginTranslations } from './utils/prefixPluginTranslations';
 
 import type { StrapiApp } from '@strapi/admin/strapi-admin';
+import type { DocumentActionComponent } from '@strapi/content-manager/strapi-admin';
 import type { Plugin } from '@strapi/types';
 
 // eslint-disable-next-line import/no-default-export
@@ -18,6 +21,7 @@ const admin: Plugin.Config.AdminInput = {
      * @type {string}
      */
     app.createHook('ContentReleases/pages/ReleaseDetails/add-locale-in-releases');
+
     if (window.strapi.features.isEnabled('cms-content-releases')) {
       app.addMenuLink({
         to: `plugins/${pluginId}`,
@@ -31,11 +35,26 @@ const admin: Plugin.Config.AdminInput = {
         position: 2,
       });
 
-      // Insert the Releases container in the 'right-links' zone of the Content Manager's edit view
-      app.getPlugin('content-manager').injectComponent('editView', 'right-links', {
-        name: `${pluginId}-link`,
-        Component: CMReleasesContainer,
-      });
+      // Insert the releases container into the CM's sidebar on the Edit View
+      const contentManagerPluginApis = app.getPlugin('content-manager').apis;
+      if (
+        'addEditViewSidePanel' in contentManagerPluginApis &&
+        typeof contentManagerPluginApis.addEditViewSidePanel === 'function'
+      ) {
+        contentManagerPluginApis.addEditViewSidePanel([ReleasesPanel]);
+      }
+
+      // Insert the "add to release" action into the CM's Edit View
+      if (
+        'addDocumentAction' in contentManagerPluginApis &&
+        typeof contentManagerPluginApis.addDocumentAction === 'function'
+      ) {
+        contentManagerPluginApis.addDocumentAction((actions: DocumentActionComponent[]) => {
+          const indexOfDeleteAction = actions.findIndex((action) => action.type === 'unpublish');
+          actions.splice(indexOfDeleteAction, 0, ReleaseActionModalForm);
+          return actions;
+        });
+      }
 
       // app.plugins['content-manager'].apis.addBulkAction((actions: BulkActionComponent[]) => {
       //   // We want to add this action to just before the delete action all the time

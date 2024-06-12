@@ -14,8 +14,8 @@ import type {
 import type {
   CreateRelease,
   DeleteRelease,
-  GetContentTypeEntryReleases,
   GetReleases,
+  GetReleasesByDocumentAttached,
   UpdateRelease,
   GetRelease,
   PublishRelease,
@@ -53,12 +53,12 @@ const releaseApi = adminApi
     endpoints: (build) => {
       return {
         getReleasesForEntry: build.query<
-          GetContentTypeEntryReleases.Response,
-          Partial<GetContentTypeEntryReleases.Request['query']>
+          GetReleasesByDocumentAttached.Response,
+          Partial<GetReleasesByDocumentAttached.Request['query']>
         >({
           query(params) {
             return {
-              url: '/content-releases',
+              url: '/content-releases/getByDocumentAttached',
               method: 'GET',
               config: {
                 params,
