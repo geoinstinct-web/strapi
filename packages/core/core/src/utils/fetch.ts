@@ -14,6 +14,7 @@ export const createStrapiFetch = (strapi: Core.Strapi): Modules.Fetch.Fetch => {
     return fetch(url, fetchOptions);
   }
 
+  // The globalproxy we use for http and https does not affect fetch, so we do it again here
   const globalProxy =
     strapi.config.get<ConstructorParameters<typeof ProxyAgent>[0]>('server.globalProxy');
 
